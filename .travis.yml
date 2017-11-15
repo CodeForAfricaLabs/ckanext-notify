@@ -1,14 +1,3 @@
-# language: python
-# sudo: required
-# python:
-#   - '2.7'
-# env:
-#   matrix:
-#     - PGVERSION=9.1
-# install: "pip install -r requirements.txt"
-# script: nosetests
-# after_success:
-#   - coveralls
 sudo: required
 language: python
 env: PGVERSION=9.2
