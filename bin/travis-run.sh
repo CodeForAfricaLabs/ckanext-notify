@@ -6,7 +6,6 @@ sudo service jetty restart
 
 nosetests --ckan \
           --nologcapture \
-          --with-pylons=subdir/test.ini \
           --with-coverage \
           --cover-package=ckanext.notify \
           --cover-inclusive \

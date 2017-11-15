@@ -10,7 +10,6 @@ import ckanext.notify.constants as constants
 from ckan.common import config, request
 import ckan.lib.mailer as mailer
 
-
 log = logging.getLogger(__name__)
 toolkit = plugins.toolkit
 c = toolkit.c
@@ -26,7 +25,6 @@ def _get_errors_summary(errors):
 
 
 class dotdict(dict):
-
     """dot.notation access to dictionary attributes"""
 
     __getattr__ = dict.get
@@ -34,7 +32,6 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 class DataRequestsNotifyUI(base.BaseController):
-
     def _get_context(self):
         return {'model': model, 'session': model.Session,
                 'user': c.user, 'auth_user_obj': c.userobj}
@@ -219,6 +216,7 @@ class DataRequestsNotifyUI(base.BaseController):
             self.post_email_form(constants.EMAIL_CHANNEL_UPDATE, context, id=id)
 
             c.group_dict = toolkit.get_action('organization_show')(context, {'id': organization_id})
+
             required_vars = \
                 {'data': c.email_data, 'errors': c.errors, 'errors_summary': c.errors_summary, 'new_form': new_form}
             return toolkit.render('notify/register_email.html', extra_vars=required_vars)
@@ -265,12 +263,20 @@ class DataRequestsNotifyUI(base.BaseController):
         channels = toolkit.get_action(constants.SLACK_CHANNELS_SHOW)(context, data_dict)
         if channels:
             extra_vars = {
+                'site_title': config.get('ckan.site_title'),
+                'datarequest_url': result['datarequest_url'],
+                'datarequest_title': result['title'],
+                'datarequest_description': result['description'],
+            }
+
+            slack_message = {'text': base.render_jinja2('notify/slack/{}.txt'.format(template), extra_vars)}
                             'site_title': config.get('ckan.site_title'),
                             'datarequest_url': result['datarequest_url'],
                             'datarequest_title': result['title'],
                             'datarequest_description': result['description'],
                         }
             slack_message = base.render_jinja2('notify/slack/{}.txt'.format(template), extra_vars)
+
 
             for channel in channels:
                 requests.post(
@@ -292,19 +298,20 @@ class DataRequestsNotifyUI(base.BaseController):
         }
 
         channels = toolkit.get_action(constants.EMAIL_CHANNELS_SHOW)(context, data_dict)
+
         if channels:
             extra_vars = {
-                            'site_url': config.get('ckan.site_url'),
-                            'site_title': config.get('ckan.site_title'),
-                            'datarequest_url': result['datarequest_url'],
-                            'datarequest_title': result['title'],
-                            'datarequest_description': result['description'],
-                            'action_type': template,
-                        }
+                'site_url': config.get('ckan.site_url'),
+                'site_title': config.get('ckan.site_title'),
+                'datarequest_url': result['datarequest_url'],
+                'datarequest_title': result['title'],
+                'datarequest_description': result['description'],
+                'action_type': template,
+            }
 
             email_subject = base.render_jinja2('notify/email/{}.txt'.format('subject'), extra_vars)
             email_body = base.render_jinja2('notify/email/{}.txt'.format(template), extra_vars)
 
             for channel in channels:
-                channel = dotdict(channel)              
+                channel = dotdict(channel)
                 mailer.mail_user(channel, email_subject, email_body)
